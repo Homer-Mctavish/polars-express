@@ -11,6 +11,7 @@ use axum::http::StatusCode;
 use axum::Json;
 use serde_json::Value;
 
+mod scraper;
 
 struct AppState {
     df_delays: DataFrame,
@@ -61,6 +62,19 @@ async fn main() {
 
     info!("done reading csv {:?}", now.elapsed());
 
+
+    // Scrape links from a website asynchronously
+    let scrape_url = "http://example.com"; // Use your desired URL
+    let links = match scrape_links(scrape_url).await {
+        Ok(links) => {
+            info!("Scraped links: {:?}", links);
+            links
+        }
+        Err(err) => {
+            info!("Error scraping links: {}", err);
+            Vec::new()
+        }
+    };
 
     let app_state = Arc::new(AppState::new(df_delays, df_cities));
 
@@ -124,13 +138,16 @@ let delays = app_state
 df_to_json(delays)
 }
 
+// Helper function to convert DataFrame to JSON
 fn df_to_json(df: DataFrame) -> Result<Json<Value>, StatusCode> {
-    serde_json::to_value(&df)
-        .map_err(|e| {
+    // Try to serialize the DataFrame to a JSON value
+    match serde_json::to_value(&df) {
+        Ok(value) => Ok(Json(value)), // Wrap the value in a Json response
+        Err(e) => {
             error!("could not serialize dataframe to json: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })
-        .map(|v| v.into())
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }
 
 fn cities_zip_to(df_cities: &DataFrame, zip: &str, field: &str) -> Result<DataFrame, StatusCode> {
