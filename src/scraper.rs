@@ -2,11 +2,6 @@
 
 use reqwest::Client;
 use scraper::{Html, Selector};
-use std::{sync::Arc, time::Instant};
-use axum::{Router, routing::get, extract::Path, Json, State};
-use serde_json::Value;
-use tracing::info;
-use futures::TryStreamExt;
 
 async fn scrape_links(url: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let client = Client::new();

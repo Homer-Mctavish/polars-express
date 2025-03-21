@@ -10,19 +10,26 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use serde_json::Value;
+use reqwest::Client;
+use scraper::{Html, Selector};
+use std::sync::Mutex;
+use reqwest::Error;
+// use std::fs::File;
+// use tokio::fs::File;
 
-mod scraper;
-
+#[derive(Clone)]
 struct AppState {
     df_delays: DataFrame,
     df_cities: DataFrame,
+    shared_data: Arc<Mutex<Vec<String>>>
 }
 
 impl AppState {
-    fn new(df_delays: DataFrame, df_cities: DataFrame) -> Self {
+    fn new(df_delays: DataFrame, df_cities: DataFrame, shared_data: Arc<Mutex<Vec<String>>>) -> Self {
         Self {
             df_delays,
             df_cities,
+            shared_data
         }
     }
 }
@@ -75,8 +82,9 @@ async fn main() {
             Vec::new()
         }
     };
+    
 
-    let app_state = Arc::new(AppState::new(df_delays, df_cities));
+    let app_state = Arc::new(AppState::new(df_delays, df_cities, Arc::new(Mutex::new(links))));
 
     let app = Router::new()
       .route("/delays", get(delays))
@@ -84,6 +92,8 @@ async fn main() {
       .route("/cities/:zip/area", get(cities_area))
       .route("/delays/:zip/", get(delays_by_zip))
       .route("/delays/corr/:field1/:field2/", get(delays_corr))
+      .route("/links/:url", get(scrape_links))
+      .route("/batches", get(batch_download_csvs))
       .with_state(app_state);
 
 
@@ -245,4 +255,68 @@ async fn delays_corr(
         })?;
 
     df_to_json(corr)
+}
+
+
+async fn scrape_links(url: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let client = Client::new();
+    let body = client.get(url).send().await?.text().await?;
+    let document = Html::parse_document(&body);
+    let selecto = Selector::parse("a").unwrap();
+
+    let links: Vec<String> = document
+        .select(&selecto)
+        .filter_map(|element| {
+            element
+                .value()
+                .attr("href")
+                .map(|link| link.to_string())
+        })
+        .collect();
+
+    Ok(links)
+}
+
+/// Attempts to download each link in `links` as a CSV.
+/// Returns a vector of Results (one per link) so you can see which succeeded or failed.
+pub async fn batch_download_csvs(links: &[String], save_dir: &str) -> Vec<Result<(), Error>> {
+    let client = Client::new();
+    let mut results = Vec::with_capacity(links.len());
+
+    // Ensure the directory exists
+    std::fs::create_dir_all(save_dir).ok();
+
+    for link in links {
+        let r = download_single_csv(&client, link, save_dir).await;
+        results.push(r);
+    }
+
+    results
+}
+
+/// Helper: downloads a single CSV link and saves it in `save_dir`.
+async fn download_single_csv(client: &Client, link: &str, save_dir: &str) -> Result<(), Error> {
+    // Attempt to GET
+    println!("Downloading: {}", link);
+    let resp = client.get(link).send().await?;
+    
+    // Check content type? (Optional)
+    // if let Some(ct) = resp.headers().get(reqwest::header::CONTENT_TYPE) {
+    //     if !ct.to_str()?.contains("text/csv") {
+    //         anyhow::bail!("Not a CSV content type: {:?}", ct);
+    //     }
+    // }
+
+    let bytes = resp.bytes().await?;
+
+    // Derive local filename
+    let filename = link.split('/').last().unwrap_or("unknown.csv");
+    let path = std::path::Path::new(save_dir).join(filename);
+
+    // Write to file
+    let mut file = File::create(&path)?;
+    file.write_all(&bytes)?;
+
+    println!("Saved {}", path.display());
+    Ok(())
 }
