@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="https://designer.igniteui.com/packages/bootstrap/bootstrap.min.css">
+		<link rel="stylesheet" href="https://designer.igniteui.com/css/themes/infragistics/infragistics.theme.css">
+		<link rel="stylesheet" href="https://designer.igniteui.com/css/structure/infragistics.css">
+		
+        
+            <!-- Ignite UI for jQuery Required Combined CSS Files (Trial) -->
+    <link href="http://cdn-na.infragistics.com/igniteui/latest/css/themes/infragistics/infragistics.theme.css" rel="stylesheet" />
+    <link href="http://cdn-na.infragistics.com/igniteui/latest/css/structure/infragistics.css" rel="stylesheet" />
+
+    <!-- JavaScript Library Dependencies -->
+    <script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+    <!-- Ignite UI for jQuery Required Combined JavaScript Files (Trial) -->
+    <script src="http://cdn-na.infragistics.com/igniteui/latest/js/infragistics.core.js"></script>
+    <script src="http://cdn-na.infragistics.com/igniteui/latest/js/infragistics.lob.js"></script>
+    <script src="http://cdn-na.infragistics.com/igniteui/latest/js/infragistics.dv.js"></script>
+        
+        <!--
+			Update the Ignite UI script references to your licensed copies before deploying.
+			Ignite UI License: https://www.infragistics.com/legal/license/ultimate/
+		-->
+		<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+		<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.min.js"></script>
+		<script src="https://designer.igniteui.com/js/infragistics.core.js"></script>
+		<script src="https://designer.igniteui.com/js/infragistics.lob.js"></script>
+		<!-- You may remove the datasources.js script if you are not using Designer sample data. -->
+		<script src="packages/igniteui/js/infragistics.dv.js"></script>
+		<script src="https://designer.igniteui.com/js/datasources.js"></script>
+		<script id="code">
+			$(document).ready(function () {
+				$("#dataChart1").igDataChart({
+					dataSource: sampleChartData,
+					width: "100%",
+					height: "300",
+					axes: [
+						{
+							name: "NameAxis",
+							type: "categoryX",
+							title: "Population",
+							label: "CountryName"
+						},
+						{
+							name: "PopulationAxis",
+							type: "numericY"
+						}
+					],
+					series: [
+						{
+							name: "Pop2008",
+							type: "column",
+							xAxis: "NameAxis",
+							yAxis: "PopulationAxis",
+							valueMemberPath: "Pop2008",
+							isHighlightingEnabled: true,
+							isTransitionInEnabled: true,
+							transitionInMode: "accordionFromValueAxisMinimum",
+							showTooltip: true,
+							tooltipTemplate: "<div>${item.CountryName}: <strong>${item.Pop2008} Million</strong></div>"
+						}
+					]
+				});
+				$("#pieChart1").igPieChart({
+					dataSource: sampleChartData,
+					width: 300,
+					height: 200,
+					valueMemberPath: "Pop2008",
+					labelMemberPath: "CountryName",
+					labelsPosition: "bestFit",
+					allowSliceExplosion: false,
+					allowSliceSelection: false
+				});
+				$("#sparkline1").igSparkline({
+					dataSource: sampleSparklineData,
+					width: "300",
+					height: "100",
+					valueMemberPath: "ExtendedPrice",
+					displayNormalRangeInFront: false
+				});
+				$("#hierarchicalGrid1").igHierarchicalGrid({
+					features: [],
+					columnLayouts: [],
+					dataSource: sampleHierarchicalData1,
+					autoGenerateLayouts: true
+				});
+
+			});
+		</script>
+	</head>
+	<body>
+		<div id="container1">
+			<div id="row1" class="row">
+			<div class="col-md-4">
+			</div>
+			<div class="col-md-4">
+			<h1 id="heading1">Polars Train Data Analysis</h1>
+		</div>
+			<div class="col-md-4">
+			</div>
+		</div>
+		</div>
+		<div id="container2">
+			<div id="row2" class="row">
+			<div class="col-md-4">
+			<p id="text1">This tool is designed to be an analysis platform for datasets regarding train station arrival times and locations to establish correlations for identifying congestion times at specific locations. Enter a URL in the text area to the side in order to scrape for CSV files or links to CSV files to obtain the requisite data.</p>
+	</div>
+			<div class="col-md-4">
+			<input id="input1" contenteditable="true"/>
+				<button id="button1">Download CSVs</button>
+	</div>
+			<div class="col-md-4">
+			<div id="hierarchicalGrid1"></div>
+		</div>
+		</div>
+		</div>
+		<div id="container3">
+			<div id="row3" class="row">
+			<div class="col-md-4">
+			<div id="dataChart1"></div>
+		</div>
+			<div class="col-md-4">
+			<div id="pieChart1"></div>
+		</div>
+			<div class="col-md-4">
+			<div id="sparkline1"></div>
+		</div>
+		</div>
+		</div>
+
+	</body>
+</html>
